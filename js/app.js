@@ -269,7 +269,7 @@ function viewHome() {
   var howto = '<div class="panel"><h2><span class="h2-emoji">🧭</span>怎么玩？</h2><div class="howto-grid">'
     + '<div class="howto-step"><span class="step-emoji">🪐</span><b>第一步 · 认识星球</b><span>点击上面的星球，听爱宝介绍太阳系的每一位家庭成员</span></div>'
     + '<div class="howto-step"><span class="step-emoji">🌍</span><b>第二步 · 回到地球</b><span>从地球进入七大洲，一路点到国家和城市，环游世界</span></div>'
-    + '<div class="howto-step"><span class="step-emoji">⭐</span><b>第三步 · 赢取星星</b><span>读完著名景点背后的历史故事，答对小测验就能收集星星</span></div>'
+    + '<div class="howto-step"><span class="step-emoji">⭐</span><b>第三步 · 收集星星</b><span>每点开一个景点、读懂它背后的历史故事，就能收集一颗星星</span></div>'
     + '</div></div>';
 
   return '<div class="screen">'
@@ -449,7 +449,7 @@ function viewCity(cid, coid, ctid) {
       + photoBox(s)
       + '<span class="card-name">' + s.name + '</span>'
       + '<span class="card-sub">' + s.tagline + '</span>'
-      + (done ? '<span class="card-chip">已获得 ⭐</span>' : '<span class="card-chip">答对测验赢 ⭐</span>')
+      + (done ? '<span class="card-chip">已探索 ⭐</span>' : '<span class="card-chip">点开收集 ⭐</span>')
       + '<span class="card-go">听故事 ›</span>'
       + '</button>';
   }).join("");
@@ -466,10 +466,12 @@ function viewCity(cid, coid, ctid) {
     + '</div>';
 }
 
-/* ---------- 视图：景点 + 历史故事 + 小测验 ---------- */
+/* ---------- 视图：景点 + 历史故事（到访即得星） ---------- */
 function viewSpot(ids) {
   var c = getContinent(ids[0]);
   var s = spotOf(state);
+  var firstVisit = !hasStar(s.id);
+  if (firstVisit) addStar(s.id);
   var backFn = c.special
     ? "go('continent','" + c.id + "')"
     : "go('city','" + ids[0] + "','" + ids[1] + "','" + ids[2] + "')";
@@ -481,61 +483,29 @@ function viewSpot(ids) {
     + '<ul class="fact-list">' + s.deep.facts.map(function (f) { return '<li>' + f + '</li>'; }).join("") + '</ul>'
     + '</div>';
 
-  var quiz = '<div class="panel quiz-box"><h2><span class="h2-emoji">🌟</span>爱宝小测验</h2>'
-    + '<div class="quiz-q">' + s.quiz.q + '</div>'
-    + '<div class="quiz-opts" id="quizOpts">'
-    + s.quiz.options.map(function (o, i) {
-      return '<button class="quiz-opt" onclick="answerQuiz(' + i + ',this)">' + String.fromCharCode(65 + i) + ". " + o + '</button>';
-    }).join("")
-    + '</div><div class="quiz-result" id="quizResult"></div></div>';
-
   var heroVisual = s.img
     ? '<img class="spot-photo" src="' + s.img + '" alt="' + s.name + '" onerror="this.remove();var e=document.getElementById(\'spotEmoji\');if(e)e.style.display=\'flex\';">'
       + '<div class="spot-emoji-big" id="spotEmoji" style="display:none;">' + s.emoji + '</div>'
     : '<div class="spot-emoji-big">' + s.emoji + '</div>';
 
+  var visitTip = firstVisit
+    ? '<div class="quiz-got-star">🎉 新探索！收集到一颗星星 ⭐（' + getStars().length + '/' + allSpots().length + '）</div>'
+    : "";
+
   return '<div class="screen">'
     + '<div class="spot-hero">' + heroVisual + '<div class="spot-name">' + s.name + '</div>'
     + '<div class="spot-loc">📍 ' + s.loc + ' · ' + s.tagline + '</div></div>'
-    + aibao("这就是" + s.name + "！先看看它是什么，再听我讲它背后的历史故事吧！")
+    + aibao("这就是" + s.name + "！先看看它是什么样的地方，再听我讲它背后的历史故事吧！")
     + '<div class="panel"><h2><span class="h2-emoji">👀</span>它是什么样的地方？</h2>'
     + s.desc.map(function (p) { return '<p>' + p + '</p>'; }).join("")
     + '</div>'
     + '<div class="panel story-box"><h2 class="story-title"><span class="h2-emoji">📜</span>历史故事：' + s.story.title + '</h2>'
     + s.story.paras.map(function (p) { return '<p>' + p + '</p>'; }).join("")
     + '</div>'
+    + (visitTip ? '<div class="panel quiz-box" style="text-align:center;">' + visitTip + '</div>' : '')
     + '<div class="panel">' + deep + '</div>'
-    + quiz
     + '<div class="btn-row"><button class="btn btn-back" onclick="' + backFn + '">← 回到' + backName + '</button></div>'
     + '</div>';
-}
-
-/* ---------- 答题 ---------- */
-function answerQuiz(i, btn) {
-  var s = spotOf(state);
-  var q = s.quiz;
-  if (i === q.answer) {
-    var opts = document.querySelectorAll("#quizOpts .quiz-opt");
-    opts.forEach(function (o) { o.disabled = true; });
-    btn.classList.add("correct");
-    var res = document.getElementById("quizResult");
-    var first = !hasStar(s.id);
-    var star = "";
-    if (first) {
-      addStar(s.id);
-      star = '<div class="quiz-got-star">🎉 答对啦！获得一颗星星 ⭐（' + getStars().length + "/" + allSpots().length + '）</div><br>';
-    } else {
-      star = '<div class="quiz-got-star">🎉 答对啦！（这颗星星你之前已经拿到过啦）</div><br>';
-    }
-    res.className = "quiz-result show good";
-    res.innerHTML = star + "💡 " + q.explain;
-  } else {
-    btn.classList.add("wrong");
-    btn.disabled = true;
-    var res2 = document.getElementById("quizResult");
-    res2.className = "quiz-result show bad";
-    res2.innerHTML = "🤔 再想想哦！提示：回到上面的故事里找一找答案～";
-  }
 }
 
 /* ---------- 星空背景 ---------- */
@@ -563,3 +533,14 @@ document.getElementById("logoBtn").addEventListener("click", function () { go("h
 makeStars();
 updateStarMeter();
 render();
+
+/* 深层链接：网址后加 ?go=页面,参数... 可直达任意地点（便于分享与测试） */
+(function () {
+  var m = location.search.match(/[?&]go=([^&]+)/);
+  if (m) {
+    var parts = decodeURIComponent(m[1]).split(",");
+    if (parts[0]) {
+      try { go.apply(null, parts); } catch (e) { go("home"); }
+    }
+  }
+})();
