@@ -1,5 +1,6 @@
 # 测试与临时文件
 test-shots/
+.imgfetch/
 *.log
 .DS_Store
 Thumbs.db

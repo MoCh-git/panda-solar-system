@@ -62,27 +62,92 @@ function updateStarMeter() {
   document.getElementById("starTotal").textContent = allSpots().length;
 }
 
-/* ---------- 爱宝（SVG 熊猫宇航员） ---------- */
+/* ---------- 爱宝（SVG 熊猫宇航员，形象致敬熊猫萌兰） ---------- */
 function pandaSVG() {
-  return '<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="熊猫宇航员爱宝">'
-    + '<circle cx="60" cy="52" r="40" fill="rgba(180,220,255,0.25)" stroke="#dfe9ff" stroke-width="3"/>'
-    + '<circle cx="34" cy="27" r="11" fill="#2b2b33"/>'
-    + '<circle cx="86" cy="27" r="11" fill="#2b2b33"/>'
-    + '<circle cx="60" cy="54" r="30" fill="#ffffff"/>'
-    + '<ellipse cx="46" cy="50" rx="9" ry="11" fill="#2b2b33" transform="rotate(-12 46 50)"/>'
-    + '<ellipse cx="74" cy="50" rx="9" ry="11" fill="#2b2b33" transform="rotate(12 74 50)"/>'
-    + '<circle cx="48" cy="49" r="3.4" fill="#fff"/><circle cx="49.2" cy="49.8" r="1.7" fill="#111"/>'
-    + '<circle cx="72" cy="49" r="3.4" fill="#fff"/><circle cx="70.8" cy="49.8" r="1.7" fill="#111"/>'
-    + '<ellipse cx="60" cy="63" rx="4.5" ry="3.5" fill="#2b2b33"/>'
-    + '<path d="M 60 66 Q 60 71 54 71 M 60 66 Q 60 71 66 71" stroke="#2b2b33" stroke-width="2" fill="none" stroke-linecap="round"/>'
-    + '<path d="M 20 58 A 40 40 0 0 0 100 58" fill="none" stroke="#c9d6f2" stroke-width="5"/>'
-    + '<rect x="34" y="92" rx="18" width="52" height="40" fill="#f4f6ff" stroke="#dfe4f7" stroke-width="2"/>'
-    + '<rect x="50" y="102" rx="4" width="20" height="12" fill="#5ec8ff" stroke="#3b8fd4" stroke-width="2"/>'
-    + '<circle cx="54" cy="108" r="2" fill="#fff"/><circle cx="60" cy="108" r="2" fill="#ffd166"/><circle cx="66" cy="108" r="2" fill="#6ee7a0"/>'
-    + '<rect x="12" y="96" rx="9" width="20" height="34" fill="#2b2b33" transform="rotate(18 22 100)"/>'
-    + '<rect x="88" y="96" rx="9" width="20" height="34" fill="#2b2b33" transform="rotate(-32 98 98)"/>'
-    + '<rect x="40" y="128" rx="8" width="16" height="13" fill="#2b2b33"/>'
-    + '<rect x="64" y="128" rx="8" width="16" height="13" fill="#2b2b33"/>'
+  return '<svg viewBox="0 0 150 172" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="熊猫宇航员爱宝">'
+    + '<defs>'
+    + '<linearGradient id="aibaoFace" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#f1e8d8"/></linearGradient>'
+    + '<linearGradient id="aibaoPatch" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d3d47"/><stop offset="1" stop-color="#1e1e26"/></linearGradient>'
+    + '<linearGradient id="aibaoSuit" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fdfeff"/><stop offset="1" stop-color="#dce5f3"/></linearGradient>'
+    + '<linearGradient id="aibaoGlass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="rgba(205,235,255,0.38)"/><stop offset="0.55" stop-color="rgba(140,190,255,0.10)"/><stop offset="1" stop-color="rgba(205,235,255,0.22)"/></linearGradient>'
+    + '<radialGradient id="aibaoCheek" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(255,138,158,0.8)"/><stop offset="1" stop-color="rgba(255,138,158,0)"/></radialGradient>'
+    + '<linearGradient id="aibaoLeaf" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4ea23c"/><stop offset="1" stop-color="#9ade6e"/></linearGradient>'
+    + '<radialGradient id="aibaoFlame" cx="0.5" cy="0.35" r="0.65"><stop offset="0" stop-color="#ffe28a"/><stop offset="1" stop-color="#ff8c2e"/></radialGradient>'
+    + '</defs>'
+    // 喷气背包与火焰
+    + '<rect x="38" y="112" width="13" height="26" rx="6" fill="#93a2c4" stroke="#6f7ea6" stroke-width="1.5"/>'
+    + '<rect x="99" y="112" width="13" height="26" rx="6" fill="#93a2c4" stroke="#6f7ea6" stroke-width="1.5"/>'
+    + '<path d="M 44.5,137 L 38,153 L 51,137 Z" fill="url(#aibaoFlame)"><animate attributeName="opacity" values="1;0.35;1" dur="0.7s" repeatCount="indefinite"/></path>'
+    + '<path d="M 105.5,137 L 99,153 L 112,137 Z" fill="url(#aibaoFlame)"><animate attributeName="opacity" values="0.4;1;0.4" dur="0.7s" repeatCount="indefinite"/></path>'
+    // 左臂（自然下垂）
+    + '<path d="M 47 112 Q 38 124 35 143" stroke="#c9d6f2" stroke-width="19" fill="none" stroke-linecap="round"/>'
+    + '<path d="M 47 112 Q 38 124 35 143" stroke="url(#aibaoSuit)" stroke-width="16" fill="none" stroke-linecap="round"/>'
+    + '<circle cx="34" cy="146" r="9" fill="#2b2b33"/>'
+    // 身体（宇航服）
+    + '<rect x="45" y="96" width="60" height="58" rx="23" fill="url(#aibaoSuit)" stroke="#c9d6f2" stroke-width="2.5"/>'
+    + '<path d="M 52 126 H 98" stroke="#c3d0ee" stroke-width="1.6" fill="none"/>'
+    + '<path d="M 75 98 V 112" stroke="#c3d0ee" stroke-width="1.6"/>'
+    // 胸前控制面板
+    + '<rect x="62" y="115" width="26" height="16" rx="3.5" fill="#243352" stroke="#5ec8ff" stroke-width="1.8"/>'
+    + '<rect x="65" y="118" width="12" height="8" rx="2" fill="#0d3f66"/>'
+    + '<path d="M 67.5 124 L 70 120.5 L 72 123 L 74.5 119.5" stroke="#6ee7a0" stroke-width="1.4" fill="none" stroke-linecap="round"/>'
+    + '<circle cx="82.5" cy="121" r="1.8" fill="#ffd166"/>'
+    + '<circle cx="82.5" cy="126" r="1.8" fill="#ff6e8a"/>'
+    + '<circle cx="68" cy="138" r="2.2" fill="#ffd166"/><circle cx="75" cy="138" r="2.2" fill="#ff6e8a"/><circle cx="82" cy="138" r="2.2" fill="#6ee7a0"/>'
+    // 肩章
+    + '<circle cx="49" cy="111" r="4" fill="#5ec8ff" stroke="#2f7fb8" stroke-width="1.5"/>'
+    + '<circle cx="101" cy="111" r="4" fill="#5ec8ff" stroke="#2f7fb8" stroke-width="1.5"/>'
+    // 靴子
+    + '<rect x="53" y="150" width="18" height="15" rx="6" fill="#2b2b33"/>'
+    + '<rect x="79" y="150" width="18" height="15" rx="6" fill="#2b2b33"/>'
+    + '<path d="M 55 161 H 69 M 81 161 H 95" stroke="#4a4a55" stroke-width="2"/>'
+    // 右臂（举起打招呼）
+    + '<path d="M 103 112 Q 110 102 125 95" stroke="#c9d6f2" stroke-width="19" fill="none" stroke-linecap="round"/>'
+    + '<path d="M 103 112 Q 110 102 125 95" stroke="url(#aibaoSuit)" stroke-width="16" fill="none" stroke-linecap="round"/>'
+    // 竹子
+    + '<path d="M 121 97 L 133 56" stroke="#4ea23c" stroke-width="4.5" stroke-linecap="round" fill="none"/>'
+    + '<path d="M 125.5 82 L 129 80.5 M 129.5 68 L 133 66.5" stroke="#3d8a2f" stroke-width="2"/>'
+    + '<g transform="translate(133 56)">'
+    + '<path d="M 0 2 Q 14 -6 24 -2 Q 12 6 0 4 Z" fill="url(#aibaoLeaf)"/>'
+    + '<path d="M 0 2 Q -12 -8 -20 -3 Q -10 5 0 4 Z" fill="url(#aibaoLeaf)"/>'
+    + '<path d="M 0 -2 Q 4 -16 14 -18 Q 8 -4 2 0 Z" fill="url(#aibaoLeaf)"/>'
+    + '</g>'
+    + '<circle cx="127" cy="94" r="9" fill="#2b2b33"/>'
+    // 头部
+    + '<circle cx="43" cy="31" r="13.5" fill="url(#aibaoPatch)" stroke="#15151c" stroke-width="1.5"/>'
+    + '<circle cx="43" cy="31" r="6" fill="#3d3d49"/>'
+    + '<circle cx="107" cy="31" r="13.5" fill="url(#aibaoPatch)" stroke="#15151c" stroke-width="1.5"/>'
+    + '<circle cx="107" cy="31" r="6" fill="#3d3d49"/>'
+    + '<circle cx="75" cy="62" r="36" fill="url(#aibaoFace)"/>'
+    + '<path d="M 44 84 Q 46 92 54 95 M 106 84 Q 104 92 96 95" stroke="#e8dcc8" stroke-width="2" fill="none" stroke-linecap="round"/>'
+    // 眼罩（萌兰式外八字）
+    + '<ellipse cx="60" cy="64" rx="12.5" ry="15.5" fill="url(#aibaoPatch)" transform="rotate(-14 60 64)"/>'
+    + '<ellipse cx="90" cy="64" rx="12.5" ry="15.5" fill="url(#aibaoPatch)" transform="rotate(14 90 64)"/>'
+    // 眼睛（双高光，亮晶晶）
+    + '<circle cx="60.5" cy="62" r="6" fill="#fff"/>'
+    + '<circle cx="61.5" cy="63" r="3.4" fill="#101014"/>'
+    + '<circle cx="59.6" cy="61" r="1.8" fill="#fff"/>'
+    + '<circle cx="62.8" cy="64.8" r="1" fill="#fff"/>'
+    + '<circle cx="89.5" cy="62" r="6" fill="#fff"/>'
+    + '<circle cx="88.5" cy="63" r="3.4" fill="#101014"/>'
+    + '<circle cx="86.6" cy="61" r="1.8" fill="#fff"/>'
+    + '<circle cx="89.8" cy="64.8" r="1" fill="#fff"/>'
+    // 腮红
+    + '<ellipse cx="47" cy="79" rx="8" ry="5" fill="url(#aibaoCheek)"/>'
+    + '<ellipse cx="103" cy="79" rx="8" ry="5" fill="url(#aibaoCheek)"/>'
+    // 鼻子 + 吐舌笑（萌兰招牌表情）
+    + '<ellipse cx="75" cy="71.5" rx="5.2" ry="4" fill="#26262e"/>'
+    + '<ellipse cx="73.4" cy="70.2" rx="1.6" ry="1.1" fill="rgba(255,255,255,0.35)"/>'
+    + '<path d="M 66 78 Q 75 88 84 78 Q 75 83 66 78 Z" fill="#432830"/>'
+    + '<ellipse cx="75" cy="83.6" rx="4.6" ry="3.6" fill="#ff93a8"/>'
+    + '<path d="M 71.6 83.2 Q 75 86.6 78.4 83.2" stroke="#e56a86" stroke-width="1.2" fill="none"/>'
+    // 头盔玻璃罩 + 反光 + 底环 + 天线
+    + '<circle cx="75" cy="62" r="44" fill="url(#aibaoGlass)" stroke="#dfe9ff" stroke-width="3.5"/>'
+    + '<path d="M 44 40 A 36 36 0 0 1 60 24" stroke="rgba(255,255,255,0.65)" stroke-width="5" fill="none" stroke-linecap="round"/>'
+    + '<path d="M 41 60 A 34 34 0 0 1 42 50" stroke="rgba(255,255,255,0.4)" stroke-width="3.5" fill="none" stroke-linecap="round"/>'
+    + '<path d="M 34 78 A 44 44 0 0 0 116 78" fill="none" stroke="#c9d6f2" stroke-width="6"/>'
+    + '<line x1="75" y1="18" x2="75" y2="9" stroke="#c9d6f2" stroke-width="3"/>'
+    + '<circle cx="75" cy="7" r="4" fill="#ff6e6e"><animate attributeName="opacity" values="1;0.25;1" dur="1.6s" repeatCount="indefinite"/></circle>'
     + '</svg>';
 }
 
@@ -92,6 +157,13 @@ function aibao(text) {
     + '<div class="panda-box">' + pandaSVG() + '</div>'
     + '<div class="bubble"><span class="bubble-name">爱宝：</span>' + text + '</div>'
     + '</div>';
+}
+
+/* 照片卡片（有图显示照片，无图/加载失败回退emoji图标） */
+function photoBox(item) {
+  if (!item.img) return '<span class="card-emoji">' + item.emoji + '</span>';
+  return '<span class="photo-box"><span class="card-emoji">' + item.emoji + '</span>'
+    + '<img src="' + item.img + '" alt="' + item.name + '" loading="lazy" onerror="this.remove()"></span>';
 }
 
 /* ---------- 卡通星球 ---------- */
@@ -345,7 +417,7 @@ function viewCountry(cid, coid) {
   var cityCards = co.cities.map(function (ci) {
     var doneCount = ci.spots.filter(function (s) { return hasStar(s.id); }).length;
     return '<button class="card" onclick="go(\'city\',\'' + cid + '\',\'' + coid + '\',\'' + ci.id + '\')">'
-      + '<span class="card-emoji">' + ci.emoji + '</span>'
+      + photoBox(ci)
       + '<span class="card-name">' + ci.name + '</span>'
       + '<span class="card-sub">' + ci.desc[0].slice(0, 38) + '…</span>'
       + '<span class="card-chip">' + ci.spots.length + ' 个景点' + (doneCount ? ' · 已得 ' + doneCount + ' ⭐' : '') + '</span>'
@@ -374,7 +446,7 @@ function viewCity(cid, coid, ctid) {
   var spotCards = ci.spots.map(function (s) {
     var done = hasStar(s.id) ? " done-star" : "";
     return '<button class="card' + done + '" onclick="go(\'spot\',\'' + cid + '\',\'' + coid + '\',\'' + ctid + '\',\'' + s.id + '\')">'
-      + '<span class="card-emoji">' + s.emoji + '</span>'
+      + photoBox(s)
       + '<span class="card-name">' + s.name + '</span>'
       + '<span class="card-sub">' + s.tagline + '</span>'
       + (done ? '<span class="card-chip">已获得 ⭐</span>' : '<span class="card-chip">答对测验赢 ⭐</span>')
@@ -417,9 +489,13 @@ function viewSpot(ids) {
     }).join("")
     + '</div><div class="quiz-result" id="quizResult"></div></div>';
 
+  var heroVisual = s.img
+    ? '<img class="spot-photo" src="' + s.img + '" alt="' + s.name + '" onerror="this.remove();var e=document.getElementById(\'spotEmoji\');if(e)e.style.display=\'flex\';">'
+      + '<div class="spot-emoji-big" id="spotEmoji" style="display:none;">' + s.emoji + '</div>'
+    : '<div class="spot-emoji-big">' + s.emoji + '</div>';
+
   return '<div class="screen">'
-    + '<div class="spot-hero"><div class="spot-emoji-big">' + s.emoji + '</div>'
-    + '<div class="spot-name">' + s.name + '</div>'
+    + '<div class="spot-hero">' + heroVisual + '<div class="spot-name">' + s.name + '</div>'
     + '<div class="spot-loc">📍 ' + s.loc + ' · ' + s.tagline + '</div></div>'
     + aibao("这就是" + s.name + "！先看看它是什么，再听我讲它背后的历史故事吧！")
     + '<div class="panel"><h2><span class="h2-emoji">👀</span>它是什么样的地方？</h2>'
