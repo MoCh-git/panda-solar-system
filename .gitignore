@@ -1,0 +1,6 @@
+# 测试与临时文件
+test-shots/
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini

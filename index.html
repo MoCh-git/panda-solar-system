@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="爱宝的太阳系之旅——熊猫爱宝带你从太阳系一路探索到地球的名胜古迹和历史故事，适合小学生学习天文地理知识。">
+  <title>爱宝的太阳系之旅 🐼🚀</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%23fff'/><circle cx='30' cy='35' r='16' fill='%23222'/><circle cx='70' cy='35' r='16' fill='%23222'/><circle cx='22' cy='22' r='10' fill='%23222'/><circle cx='78' cy='22' r='10' fill='%23222'/><circle cx='50' cy='60' r='6' fill='%23222'/></svg>">
+</head>
+<body>
+  <!-- 星空背景层 -->
+  <div class="stars stars-1" aria-hidden="true"></div>
+  <div class="stars stars-2" aria-hidden="true"></div>
+  <div class="stars stars-3" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <button class="logo" id="logoBtn" title="回到首页">
+      <span class="logo-panda">🐼</span>
+      <span class="logo-text">爱宝的太阳系之旅</span>
+    </button>
+    <div class="star-meter" title="收集到的星星">
+      <span class="star-icon">⭐</span>
+      <span><b id="starNum">0</span> / <span id="starTotal">0</span></span>
+    </div>
+  </header>
+
+  <nav class="breadcrumb" id="breadcrumb" aria-label="位置导航"></nav>
+
+  <main id="app" class="app-main"></main>
+
+  <footer class="site-footer">
+    <p>🐼 爱宝的太阳系之旅 · 给小小探险家的天文地理启蒙</p>
+    <p class="footer-tip">提示：从太阳系出发，一路点到你想去的地方，每读完一个故事都有小测验等你赢星星哦！</p>
+  </footer>
+
+  <script src="js/data-space.js"></script>
+  <script src="js/data-earth.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
