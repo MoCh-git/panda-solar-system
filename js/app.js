@@ -5,6 +5,8 @@
 
 /* ---------- 全局状态 ---------- */
 let state = { screen: "home", ids: [] };
+var mapLayer = "normal";   /* 地图模式：normal / currents / zones */
+var zoneSel = null;        /* 当前查看的自然带 */
 
 /* ---------- 工具 ---------- */
 function getBody(id) {
@@ -71,6 +73,7 @@ function addStar(id) {
 function starTotal() {
   var t = allCities().length;
   if (typeof WONDERS !== "undefined" && WONDERS) t += WONDERS.length;
+  if (typeof OCEANS !== "undefined" && OCEANS) t += OCEANS.length;
   return t;
 }
 function updateStarMeter() {
@@ -200,6 +203,9 @@ function renderBreadcrumb() {
   if (s === "wonder") {
     parts.push({ label: "地球", fn: "go('earth')" });
     parts.push({ label: getWonder(ids[0]) ? getWonder(ids[0]).name : "奇观", now: true });
+  } else if (s === "ocean") {
+    parts.push({ label: "地球", fn: "go('earth')" });
+    parts.push({ label: getOcean(ids[0]) ? getOcean(ids[0]).name : "大洋", now: true });
   } else if (s === "body") {
     parts.push({ label: getBody(ids[0]).name, now: true });
   } else if (s === "earth") {
@@ -259,6 +265,7 @@ function render() {
   else if (s === "city") app.innerHTML = viewCity(ids[0], ids[1], ids[2]);
   else if (s === "spot") app.innerHTML = viewSpot(ids);
   else if (s === "wonder") app.innerHTML = viewWonder(ids[0]);
+  else if (s === "ocean") app.innerHTML = viewOcean(ids[0]);
   window.scrollTo(0, 0);
 }
 
@@ -341,16 +348,31 @@ function toggleDeep(btn) {
   label.textContent = body.classList.contains("show") ? "🙈 收起" : "🔍 深入了解";
 }
 
-/* ---------- 视图：地球（七大洲地图） ---------- */
+/* ---------- 视图：地球（三大模式：标准 / 洋流 / 自然带） ---------- */
+function setMapLayer(m) { mapLayer = m; render(); }
+
+function showZoneInfo(id) {
+  var z = (typeof ZONES !== "undefined" && ZONES) ? ZONES.find(function (x) { return x.id === id; }) : null;
+  var box = document.getElementById("zoneInfo");
+  if (!box || !z) return;
+  zoneSel = id;
+  box.innerHTML = '<div class="zone-card show"><div class="zone-card-head"><span class="zone-swatch" style="background:' + z.color + '"></span><b>' + z.name + '</b><span class="zone-lat">' + z.lat + '</span></div>'
+    + '<p>' + z.desc + '</p><p class="zone-animals">🦌 ' + z.animals + '</p></div>';
+  document.querySelectorAll(".zone-chip").forEach(function (c) { c.classList.remove("active"); });
+  var chip = document.getElementById("zc-" + id);
+  if (chip) chip.classList.add("active");
+}
+
 function viewEarth() {
   var shapes = EARTH.map.shapes;
-  var paths = "";
+  var continentPaths = "";
   EARTH.continents.forEach(function (c) {
     var sh = shapes[c.id];
-    paths += '<path id="map-' + c.id + '" class="map-cont" fill="' + c.color + '" d="' + sh.path + '" onclick="go(\'continent\',\'' + c.id + '\')"><title>' + c.name + '</title></path>'
+    continentPaths += '<path id="map-' + c.id + '" class="map-cont" fill="' + c.color + '" d="' + sh.path + '" onclick="go(\'continent\',\'' + c.id + '\')"><title>' + c.name + '</title></path>'
       + '<text class="map-label" x="' + sh.lx + '" y="' + sh.ly + '" text-anchor="middle">' + c.name + '</text>';
   });
-  // 地理奇迹发光标记
+
+  /* 地理奇迹发光标记 */
   var wonderDots = "";
   if (typeof WONDERS !== "undefined" && WONDERS) {
     WONDERS.forEach(function (w) {
@@ -362,12 +384,68 @@ function viewEarth() {
     });
   }
 
-  var map = '<div class="panel map-card"><h2><span class="h2-emoji">🗺️</span>地球 · 七大洲地图（点击出发！）</h2>'
+  /* 四大洋名称标签（可点击） */
+  var oceanLabels = "";
+  if (typeof OCEANS !== "undefined" && OCEANS) {
+    OCEANS.forEach(function (o) {
+      oceanLabels += '<g class="ocean-label" onclick="go(\'ocean\',\'' + o.id + '\')"><title>' + o.name + '</title>'
+        + '<text x="' + o.x + '" y="' + o.y + '" text-anchor="middle">' + o.emoji + " " + o.name + '</text></g>';
+    });
+  }
+
+  /* 洋流层 */
+  var currentsLayer = "";
+  if (mapLayer === "currents" && typeof CURRENTS !== "undefined" && CURRENTS) {
+    CURRENTS.forEach(function (c) {
+      currentsLayer += '<path class="current-path" d="' + c.d + '" stroke="' + (c.warm ? "#ff7a6e" : "#6ec6ff") + '"><title>' + c.name + (c.warm ? "（暖流）" : "（寒流）") + '</title></path>';
+    });
+  }
+
+  /* 自然带层（裁剪到陆地范围） */
+  var zonesLayer = "";
+  if (mapLayer === "zones" && typeof ZONES !== "undefined" && ZONES) {
+    var allShapes = "";
+    EARTH.continents.forEach(function (c) { allShapes += '<path d="' + shapes[c.id].path + '"/>'; });
+    zonesLayer = '<defs><clipPath id="landClip">' + allShapes + '</clipPath></defs>'
+      + '<g clip-path="url(#landClip)" class="zones-layer">';
+    ZONES.forEach(function (z) {
+      zonesLayer += '<rect x="0" y="' + z.y1 + '" width="1000" height="' + (z.y2 - z.y1) + '" fill="' + z.color + '" onclick="showZoneInfo(\'' + z.id + '\')"><title>' + z.name + '</title></rect>';
+    });
+    zonesLayer += '</g>';
+  }
+
+  var dimCls = mapLayer === "normal" ? "" : (mapLayer === "currents" ? " dimmed-strong" : " dimmed-soft");
+
+  var modeBtns = '<div class="map-modes">'
+    + '<button class="map-mode-btn' + (mapLayer === "normal" ? " active" : "") + '" onclick="setMapLayer(\'normal\')">🗺️ 标准</button>'
+    + '<button class="map-mode-btn' + (mapLayer === "currents" ? " active" : "") + '" onclick="setMapLayer(\'currents\')">🌊 洋流演示</button>'
+    + '<button class="map-mode-btn' + (mapLayer === "zones" ? " active" : "") + '" onclick="setMapLayer(\'zones\')">🌿 陆地自然带</button>'
+    + '</div>';
+
+  var legend = "";
+  if (mapLayer === "currents") {
+    legend = '<div class="map-legend"><span class="lg-item"><span class="lg-swatch" style="background:#ff7a6e"></span>暖流（温暖）</span>'
+      + '<span class="lg-item"><span class="lg-swatch" style="background:#6ec6ff"></span>寒流（冰凉）</span>'
+      + '<span class="lg-tip">把鼠标放在流动的线上可以看到洋流名字；点击蓝字大洋名可进入大洋介绍 🌊</span></div>';
+  } else if (mapLayer === "zones") {
+    legend = '<div class="map-legend zone-chips">';
+    (ZONES || []).forEach(function (z) {
+      legend += '<button class="zone-chip' + (zoneSel === z.id ? " active" : "") + '" id="zc-' + z.id + '" onclick="showZoneInfo(\'' + z.id + '\')"><span class="lg-swatch" style="background:' + z.color + '"></span>' + z.name + '</button>';
+    });
+    legend += '</div><div id="zoneInfo"></div>';
+  }
+
+  var map = '<div class="panel map-card">'
+    + '<h2><span class="h2-emoji">🗺️</span>地球 · 交互地图</h2>'
+    + modeBtns
     + '<svg class="world-map" viewBox="' + EARTH.map.vb + '" xmlns="http://www.w3.org/2000/svg">'
     + '<line x1="0" y1="262" x2="1000" y2="262" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-dasharray="12 10"/>'
     + '<text x="30" y="256" fill="rgba(255,255,255,0.55)" font-size="15">赤道</text>'
-    + paths + wonderDots
-    + '</svg></div>';
+    + '<g class="' + dimCls + '">' + continentPaths + '</g>'
+    + zonesLayer + currentsLayer + wonderDots + oceanLabels
+    + '</svg>'
+    + legend
+    + '</div>';
 
   var cards = EARTH.continents.map(function (c) {
     var sub = c.special ? "没有国家，只有科学家的特殊大洲" : c.countries.length + " 个精选国家等你探索";
@@ -384,8 +462,7 @@ function viewEarth() {
   if (typeof WONDERS !== "undefined" && WONDERS) {
     wonderCards = '<div class="panel"><h2><span class="h2-emoji">🌍</span>世界自然奇观（地图上的金色亮点）</h2><div class="cards">'
       + WONDERS.map(function (w) {
-        var done = hasStar(w.id) ? " done-star" : "";
-        return '<button class="card' + done + '" onclick="go(\'wonder\',\'' + w.id + '\')">'
+        return '<button class="card' + (hasStar(w.id) ? " done-star" : "") + '" onclick="go(\'wonder\',\'' + w.id + '\')">'
           + photoBox(w)
           + '<span class="card-name">' + w.name + '</span>'
           + '<span class="card-sub">' + w.tagline + '</span>'
@@ -396,16 +473,85 @@ function viewEarth() {
       + '</div></div>';
   }
 
+  var oceanCards = "";
+  if (typeof OCEANS !== "undefined" && OCEANS) {
+    oceanCards = '<div class="panel"><h2><span class="h2-emoji">🌊</span>四大洋（点击地图上的蓝色洋名或这里）</h2><div class="cards">'
+      + OCEANS.map(function (o) {
+        return '<button class="card' + (hasStar(o.id) ? " done-star" : "") + '" onclick="go(\'ocean\',\'' + o.id + '\')">'
+          + photoBox(o)
+          + '<span class="card-name">' + o.emoji + " " + o.name + '</span>'
+          + '<span class="card-sub">' + o.tagline + '</span>'
+          + '<span class="card-chip">' + (hasStar(o.id) ? "测验已过 ⭐" : "测验赢星") + '</span>'
+          + '<span class="card-go">去探索 ›</span>'
+          + '</button>';
+      }).join("")
+      + '</div></div>';
+  }
+
+  var bubbleText = mapLayer === "currents"
+    ? "看！洋流像大海里的河流：红线是暖流、蓝线是寒流。墨西哥湾暖流像一条暖气管道，把加勒比海的暖水一路送到欧洲！"
+    : (mapLayer === "zones"
+      ? "这片绿色、黄色、白色的色带，就是地球的“陆地自然带”——从赤道的雨林到两极的冰原，跟着颜色去旅行吧！点色带或下面的图例可以看介绍。"
+      : "我们到家啦！点大洲去旅行；点金色圆点看自然奇观；点蓝色洋名探索四大洋；还可以切换“洋流演示”和“自然带”模式！");
+
   return '<div class="screen">'
     + '<h1 class="screen-title">🌍 欢迎来到地球</h1>'
     + '<p class="screen-sub">七大洲 · 四大洋 · 一个家</p>'
-    + aibao("我们到家啦！点一个大洲去旅行，也可以点击地图上闪金光的圆点，探索大自然的奇观！")
+    + aibao(bubbleText)
     + map
     + '<div class="panel"><h2><span class="h2-emoji">🌏</span>选择大洲</h2><div class="cards">' + cards + '</div></div>'
+    + oceanCards
     + wonderCards
     + '<div class="btn-row"><button class="btn btn-back" onclick="go(\'body\',\'earth\')">🌍 回看地球知识卡</button>'
     + '<button class="btn btn-back" onclick="go(\'body\',\'moon\')">🌙 去看月球</button>'
     + '<button class="btn btn-back" onclick="go(\'home\')">← 返回太阳系</button></div>'
+    + '</div>';
+}
+
+/* ---------- 视图：大洋 ---------- */
+function getOcean(id) {
+  if (typeof OCEANS === "undefined" || !OCEANS) return null;
+  return OCEANS.find(function (o) { return o.id === id; }) || null;
+}
+
+function viewOcean(id) {
+  var o = getOcean(id);
+  if (!o) return viewEarth();
+
+  var heroVisual = o.img
+    ? '<img class="spot-photo" src="' + o.img + '" alt="' + o.name + '" onerror="this.remove();var e=document.getElementById(\'spotEmoji\');if(e)e.style.display=\'flex\';">'
+      + '<div class="spot-emoji-big" id="spotEmoji" style="display:none;">' + o.emoji + '</div>'
+    : '<div class="spot-emoji-big">' + o.emoji + '</div>';
+
+  var deep = '<button class="deep-toggle" onclick="toggleDeep(this)"><span>🔍 深入了解</span><span class="arrow">▼</span></button>'
+    + '<div class="deep-body">'
+    + o.deep.paras.map(function (p) { return '<p>' + p + '</p>'; }).join("")
+    + '<ul class="fact-list">' + o.deep.facts.map(function (f) { return '<li>' + f + '</li>'; }).join("") + '</ul>'
+    + '</div>';
+
+  QUIZ_TARGET = { id: o.id, quiz: o.quiz };
+  var quizCard = '<div class="panel quiz-box"><h2><span class="h2-emoji">🌟</span>爱宝小测验：关于' + o.name + '</h2>'
+    + (hasStar(o.id) ? '<div class="quiz-q" style="color:#8fe3a8;">✅ 你已经答对过这题、拿过星星啦！要不要再答一次试试？</div>' : "")
+    + '<div class="quiz-q">' + o.quiz.q + '</div>'
+    + '<div class="quiz-opts" id="quizOpts">'
+    + o.quiz.options.map(function (op, i) {
+      return '<button class="quiz-opt" onclick="answerQuiz(' + i + ',this)">' + String.fromCharCode(65 + i) + ". " + op + '</button>';
+    }).join("")
+    + '</div><div class="quiz-result" id="quizResult"></div></div>';
+
+  return '<div class="screen">'
+    + '<div class="spot-hero">' + heroVisual + '<div class="spot-name">' + o.emoji + " " + o.name + '</div>'
+    + '<div class="spot-loc">🌊 四大洋 · ' + o.tagline + '</div></div>'
+    + aibao(o.bubble || "潜入" + o.name + "！这是地球上最辽阔的蓝色世界。")
+    + '<div class="panel"><h2><span class="h2-emoji">👀</span>它是什么样的海洋？</h2>'
+    + o.desc.map(function (p) { return '<p>' + p + '</p>'; }).join("")
+    + '</div>'
+    + '<div class="panel story-box"><h2 class="story-title"><span class="h2-emoji">📜</span>海洋故事：' + o.story.title + '</h2>'
+    + o.story.paras.map(function (p) { return '<p>' + p + '</p>'; }).join("")
+    + '</div>'
+    + '<div class="panel">' + deep + '</div>'
+    + quizCard
+    + '<div class="btn-row"><button class="btn btn-back" onclick="go(\'earth\')">🗺️ 回地球地图</button></div>'
     + '</div>';
 }
 
@@ -671,6 +817,14 @@ render();
   var m = location.search.match(/[?&]go=([^&]+)/);
   if (m) {
     var parts = decodeURIComponent(m[1]).split(",");
+    if (parts[0] === "earth" && (parts[1] === "cur" || parts[1] === "zones")) {
+      mapLayer = (parts[1] === "cur") ? "currents" : "zones";
+      if (parts[2] && parts[1] === "zones") {
+        var zi = parts[2];
+        setTimeout(function () { try { showZoneInfo(zi); } catch (e) {} }, 0);
+      }
+      parts = ["earth"];
+    }
     if (parts[0]) {
       try { go.apply(null, parts); } catch (e) { go("home"); }
     }
