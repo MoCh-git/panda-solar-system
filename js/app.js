@@ -43,9 +43,20 @@ function allSpots() {
   return list;
 }
 
-/* ---------- 星星进度 ---------- */
+/* 收集所有城市 */
+function allCities() {
+  var list = [];
+  EARTH.continents.forEach(function (c) {
+    (c.countries || []).forEach(function (co) {
+      co.cities.forEach(function (ci) { list.push(ci); });
+    });
+  });
+  return list;
+}
+
+/* ---------- 星星进度（答对城市/奇迹测验得星） ---------- */
 function getStars() {
-  try { return JSON.parse(localStorage.getItem("abao_stars") || "[]"); }
+  try { return JSON.parse(localStorage.getItem("abao_quiz_stars") || "[]"); }
   catch (e) { return []; }
 }
 function hasStar(id) { return getStars().indexOf(id) >= 0; }
@@ -53,13 +64,18 @@ function addStar(id) {
   var s = getStars();
   if (s.indexOf(id) < 0) {
     s.push(id);
-    localStorage.setItem("abao_stars", JSON.stringify(s));
+    localStorage.setItem("abao_quiz_stars", JSON.stringify(s));
   }
   updateStarMeter();
 }
+function starTotal() {
+  var t = allCities().length;
+  if (typeof WONDERS !== "undefined" && WONDERS) t += WONDERS.length;
+  return t;
+}
 function updateStarMeter() {
   document.getElementById("starNum").textContent = getStars().length;
-  document.getElementById("starTotal").textContent = allSpots().length;
+  document.getElementById("starTotal").textContent = starTotal();
 }
 
 /* ---------- 爱宝（SVG 熊猫宇航员，形象致敬熊猫萌兰） ---------- */
@@ -181,7 +197,10 @@ function renderBreadcrumb() {
   if (s === "home") { bc.innerHTML = ""; return; }
   parts.push({ label: "🏠 首页", fn: "go('home')" });
 
-  if (s === "body") {
+  if (s === "wonder") {
+    parts.push({ label: "地球", fn: "go('earth')" });
+    parts.push({ label: getWonder(ids[0]) ? getWonder(ids[0]).name : "奇观", now: true });
+  } else if (s === "body") {
     parts.push({ label: getBody(ids[0]).name, now: true });
   } else if (s === "earth") {
     parts.push({ label: "地球", now: true });
@@ -239,6 +258,7 @@ function render() {
   else if (s === "country") app.innerHTML = viewCountry(ids[0], ids[1]);
   else if (s === "city") app.innerHTML = viewCity(ids[0], ids[1], ids[2]);
   else if (s === "spot") app.innerHTML = viewSpot(ids);
+  else if (s === "wonder") app.innerHTML = viewWonder(ids[0]);
   window.scrollTo(0, 0);
 }
 
@@ -269,7 +289,7 @@ function viewHome() {
   var howto = '<div class="panel"><h2><span class="h2-emoji">🧭</span>怎么玩？</h2><div class="howto-grid">'
     + '<div class="howto-step"><span class="step-emoji">🪐</span><b>第一步 · 认识星球</b><span>点击上面的星球，听爱宝介绍太阳系的每一位家庭成员</span></div>'
     + '<div class="howto-step"><span class="step-emoji">🌍</span><b>第二步 · 回到地球</b><span>从地球进入七大洲，一路点到国家和城市，环游世界</span></div>'
-    + '<div class="howto-step"><span class="step-emoji">⭐</span><b>第三步 · 收集星星</b><span>每点开一个景点、读懂它背后的历史故事，就能收集一颗星星</span></div>'
+    + '<div class="howto-step"><span class="step-emoji">⭐</span><b>第三步 · 答题赢星</b><span>每座城市和每个自然奇观都有一道小测验，答对就能收集星星</span></div>'
     + '</div></div>';
 
   return '<div class="screen">'
@@ -330,12 +350,23 @@ function viewEarth() {
     paths += '<path id="map-' + c.id + '" class="map-cont" fill="' + c.color + '" d="' + sh.path + '" onclick="go(\'continent\',\'' + c.id + '\')"><title>' + c.name + '</title></path>'
       + '<text class="map-label" x="' + sh.lx + '" y="' + sh.ly + '" text-anchor="middle">' + c.name + '</text>';
   });
+  // 地理奇迹发光标记
+  var wonderDots = "";
+  if (typeof WONDERS !== "undefined" && WONDERS) {
+    WONDERS.forEach(function (w) {
+      wonderDots += '<g class="wonder-dot" transform="translate(' + w.x + ',' + w.y + ')" onclick="go(\'wonder\',\'' + w.id + '\')"><title>' + w.name + '</title>'
+        + '<circle r="14" fill="rgba(255,209,102,0.35)"><animate attributeName="r" values="10;18;10" dur="2.2s" repeatCount="indefinite"/></circle>'
+        + '<circle r="6" fill="#ffd166" stroke="#fff" stroke-width="2"/>'
+        + '<text y="-24" text-anchor="middle" class="map-label-sub">' + w.name + '</text>'
+        + '</g>';
+    });
+  }
 
   var map = '<div class="panel map-card"><h2><span class="h2-emoji">🗺️</span>地球 · 七大洲地图（点击出发！）</h2>'
     + '<svg class="world-map" viewBox="' + EARTH.map.vb + '" xmlns="http://www.w3.org/2000/svg">'
     + '<line x1="0" y1="262" x2="1000" y2="262" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-dasharray="12 10"/>'
     + '<text x="30" y="256" fill="rgba(255,255,255,0.55)" font-size="15">赤道</text>'
-    + paths
+    + paths + wonderDots
     + '</svg></div>';
 
   var cards = EARTH.continents.map(function (c) {
@@ -349,12 +380,29 @@ function viewEarth() {
       + '</button>';
   }).join("");
 
+  var wonderCards = "";
+  if (typeof WONDERS !== "undefined" && WONDERS) {
+    wonderCards = '<div class="panel"><h2><span class="h2-emoji">🌍</span>世界自然奇观（地图上的金色亮点）</h2><div class="cards">'
+      + WONDERS.map(function (w) {
+        var done = hasStar(w.id) ? " done-star" : "";
+        return '<button class="card' + done + '" onclick="go(\'wonder\',\'' + w.id + '\')">'
+          + photoBox(w)
+          + '<span class="card-name">' + w.name + '</span>'
+          + '<span class="card-sub">' + w.tagline + '</span>'
+          + '<span class="card-chip">' + (hasStar(w.id) ? "测验已过 ⭐" : "测验赢星") + '</span>'
+          + '<span class="card-go">去看看 ›</span>'
+          + '</button>';
+      }).join("")
+      + '</div></div>';
+  }
+
   return '<div class="screen">'
     + '<h1 class="screen-title">🌍 欢迎来到地球</h1>'
     + '<p class="screen-sub">七大洲 · 四大洋 · 一个家</p>'
-    + aibao("我们到家啦！这是地球的地图，你认识几个大洲？点一个大洲（或下面的卡片），出发！")
+    + aibao("我们到家啦！点一个大洲去旅行，也可以点击地图上闪金光的圆点，探索大自然的奇观！")
     + map
     + '<div class="panel"><h2><span class="h2-emoji">🌏</span>选择大洲</h2><div class="cards">' + cards + '</div></div>'
+    + wonderCards
     + '<div class="btn-row"><button class="btn btn-back" onclick="go(\'body\',\'earth\')">🌍 回看地球知识卡</button>'
     + '<button class="btn btn-back" onclick="go(\'body\',\'moon\')">🌙 去看月球</button>'
     + '<button class="btn btn-back" onclick="go(\'home\')">← 返回太阳系</button></div>'
@@ -415,12 +463,11 @@ function viewCountry(cid, coid) {
   }).join("");
 
   var cityCards = co.cities.map(function (ci) {
-    var doneCount = ci.spots.filter(function (s) { return hasStar(s.id); }).length;
     return '<button class="card" onclick="go(\'city\',\'' + cid + '\',\'' + coid + '\',\'' + ci.id + '\')">'
       + photoBox(ci)
       + '<span class="card-name">' + ci.name + '</span>'
       + '<span class="card-sub">' + ci.desc[0].slice(0, 38) + '…</span>'
-      + '<span class="card-chip">' + ci.spots.length + ' 个景点' + (doneCount ? ' · 已得 ' + doneCount + ' ⭐' : '') + '</span>'
+      + '<span class="card-chip">' + ci.spots.length + ' 个景点 · ' + (hasStar(ci.id) ? "测验已过 ⭐" : "测验赢星") + '</span>'
       + '<span class="card-go">前往 ›</span>'
       + '</button>';
   }).join("");
@@ -444,15 +491,28 @@ function viewCity(cid, coid, ctid) {
   var ci = getCity(cid, coid, ctid);
 
   var spotCards = ci.spots.map(function (s) {
-    var done = hasStar(s.id) ? " done-star" : "";
-    return '<button class="card' + done + '" onclick="go(\'spot\',\'' + cid + '\',\'' + coid + '\',\'' + ctid + '\',\'' + s.id + '\')">'
+    return '<button class="card" onclick="go(\'spot\',\'' + cid + '\',\'' + coid + '\',\'' + ctid + '\',\'' + s.id + '\')">'
       + photoBox(s)
       + '<span class="card-name">' + s.name + '</span>'
       + '<span class="card-sub">' + s.tagline + '</span>'
-      + (done ? '<span class="card-chip">已探索 ⭐</span>' : '<span class="card-chip">点开收集 ⭐</span>')
+      + '<span class="card-chip">📜 历史故事</span>'
       + '<span class="card-go">听故事 ›</span>'
       + '</button>';
   }).join("");
+
+  var qz = (typeof CITY_QUIZ !== "undefined") ? CITY_QUIZ[ci.id] : null;
+  var quizCard = "";
+  if (qz) {
+    QUIZ_TARGET = { id: ci.id, quiz: qz };
+    quizCard = '<div class="panel quiz-box"><h2><span class="h2-emoji">🌟</span>爱宝小测验：关于' + ci.name + '</h2>'
+      + (hasStar(ci.id) ? '<div class="quiz-q" style="color:#8fe3a8;">✅ 你已经答对过这题、拿过星星啦！要不要再答一次试试？</div>' : "")
+      + '<div class="quiz-q">' + qz.q + '</div>'
+      + '<div class="quiz-opts" id="quizOpts">'
+      + qz.options.map(function (o, i) {
+        return '<button class="quiz-opt" onclick="answerQuiz(' + i + ',this)">' + String.fromCharCode(65 + i) + ". " + o + '</button>';
+      }).join("")
+      + '</div><div class="quiz-result" id="quizResult"></div></div>';
+  }
 
   return '<div class="screen">'
     + '<h1 class="screen-title">' + ci.emoji + " " + ci.name + '</h1>'
@@ -462,16 +522,15 @@ function viewCity(cid, coid, ctid) {
     + ci.desc.map(function (p) { return '<p>' + p + '</p>'; }).join("")
     + '</div>'
     + '<div class="panel"><h2><span class="h2-emoji">📍</span>著名景点</h2><div class="cards">' + spotCards + '</div></div>'
+    + quizCard
     + '<div class="btn-row"><button class="btn btn-back" onclick="go(\'country\',\'' + cid + '\',\'' + coid + '\')">← 回到' + co.name + '</button></div>'
     + '</div>';
 }
 
-/* ---------- 视图：景点 + 历史故事（到访即得星） ---------- */
+/* ---------- 视图：景点 + 历史故事 ---------- */
 function viewSpot(ids) {
   var c = getContinent(ids[0]);
   var s = spotOf(state);
-  var firstVisit = !hasStar(s.id);
-  if (firstVisit) addStar(s.id);
   var backFn = c.special
     ? "go('continent','" + c.id + "')"
     : "go('city','" + ids[0] + "','" + ids[1] + "','" + ids[2] + "')";
@@ -488,10 +547,6 @@ function viewSpot(ids) {
       + '<div class="spot-emoji-big" id="spotEmoji" style="display:none;">' + s.emoji + '</div>'
     : '<div class="spot-emoji-big">' + s.emoji + '</div>';
 
-  var visitTip = firstVisit
-    ? '<div class="quiz-got-star">🎉 新探索！收集到一颗星星 ⭐（' + getStars().length + '/' + allSpots().length + '）</div>'
-    : "";
-
   return '<div class="screen">'
     + '<div class="spot-hero">' + heroVisual + '<div class="spot-name">' + s.name + '</div>'
     + '<div class="spot-loc">📍 ' + s.loc + ' · ' + s.tagline + '</div></div>'
@@ -502,9 +557,86 @@ function viewSpot(ids) {
     + '<div class="panel story-box"><h2 class="story-title"><span class="h2-emoji">📜</span>历史故事：' + s.story.title + '</h2>'
     + s.story.paras.map(function (p) { return '<p>' + p + '</p>'; }).join("")
     + '</div>'
-    + (visitTip ? '<div class="panel quiz-box" style="text-align:center;">' + visitTip + '</div>' : '')
     + '<div class="panel">' + deep + '</div>'
-    + '<div class="btn-row"><button class="btn btn-back" onclick="' + backFn + '">← 回到' + backName + '</button></div>'
+    + '<div class="btn-row"><button class="btn btn-back" onclick="' + backFn + '">← 回到' + backName + '，去做城市小测验</button></div>'
+    + '</div>';
+}
+
+/* ---------- 答题（城市测验 / 奇迹测验） ---------- */
+var QUIZ_TARGET = null;
+
+function answerQuiz(i, btn) {
+  if (!QUIZ_TARGET) return;
+  var q = QUIZ_TARGET.quiz;
+  if (i === q.answer) {
+    var opts = document.querySelectorAll("#quizOpts .quiz-opt");
+    opts.forEach(function (o) { o.disabled = true; });
+    btn.classList.add("correct");
+    var res = document.getElementById("quizResult");
+    var first = !hasStar(QUIZ_TARGET.id);
+    var star = "";
+    if (first) {
+      addStar(QUIZ_TARGET.id);
+      star = '<div class="quiz-got-star">🎉 答对啦！获得一颗星星 ⭐（' + getStars().length + "/" + starTotal() + '）</div><br>';
+    } else {
+      star = '<div class="quiz-got-star">🎉 答对啦！（这颗星星你之前已经拿到过啦）</div><br>';
+    }
+    res.className = "quiz-result show good";
+    res.innerHTML = star + "💡 " + q.explain;
+  } else {
+    btn.classList.add("wrong");
+    btn.disabled = true;
+    var res2 = document.getElementById("quizResult");
+    res2.className = "quiz-result show bad";
+    res2.innerHTML = "🤔 再想想哦！提示：到上面的介绍和故事里找一找答案～";
+  }
+}
+
+/* ---------- 视图：地理奇迹 ---------- */
+function getWonder(id) {
+  if (typeof WONDERS === "undefined" || !WONDERS) return null;
+  return WONDERS.find(function (w) { return w.id === id; }) || null;
+}
+
+function viewWonder(id) {
+  var w = getWonder(id);
+  if (!w) return viewEarth();
+
+  var heroVisual = w.img
+    ? '<img class="spot-photo" src="' + w.img + '" alt="' + w.name + '" onerror="this.remove();var e=document.getElementById(\'spotEmoji\');if(e)e.style.display=\'flex\';">'
+      + '<div class="spot-emoji-big" id="spotEmoji" style="display:none;">' + w.emoji + '</div>'
+    : '<div class="spot-emoji-big">' + w.emoji + '</div>';
+
+  var deep = '<button class="deep-toggle" onclick="toggleDeep(this)"><span>🔍 深入了解</span><span class="arrow">▼</span></button>'
+    + '<div class="deep-body">'
+    + w.deep.paras.map(function (p) { return '<p>' + p + '</p>'; }).join("")
+    + '<ul class="fact-list">' + w.deep.facts.map(function (f) { return '<li>' + f + '</li>'; }).join("") + '</ul>'
+    + '</div>';
+
+  var q = w.quiz;
+  QUIZ_TARGET = { id: w.id, quiz: q };
+  var quizCard = '<div class="panel quiz-box"><h2><span class="h2-emoji">🌟</span>爱宝小测验：关于' + w.name + '</h2>'
+    + (hasStar(w.id) ? '<div class="quiz-q" style="color:#8fe3a8;">✅ 你已经答对过这题、拿过星星啦！要不要再答一次试试？</div>' : "")
+    + '<div class="quiz-q">' + q.q + '</div>'
+    + '<div class="quiz-opts" id="quizOpts">'
+    + q.options.map(function (o, i) {
+      return '<button class="quiz-opt" onclick="answerQuiz(' + i + ',this)">' + String.fromCharCode(65 + i) + ". " + o + '</button>';
+    }).join("")
+    + '</div><div class="quiz-result" id="quizResult"></div></div>';
+
+  return '<div class="screen">'
+    + '<div class="spot-hero">' + heroVisual + '<div class="spot-name">' + w.name + '</div>'
+    + '<div class="spot-loc">🌍 世界自然奇观 · ' + w.tagline + '</div></div>'
+    + aibao("欢迎来到世界奇观——" + w.name + "！这是大自然亲手创造的杰作！")
+    + '<div class="panel"><h2><span class="h2-emoji">👀</span>它是什么样的地方？</h2>'
+    + w.desc.map(function (p) { return '<p>' + p + '</p>'; }).join("")
+    + '</div>'
+    + '<div class="panel story-box"><h2 class="story-title"><span class="h2-emoji">📜</span>' + w.story.title + '</h2>'
+    + w.story.paras.map(function (p) { return '<p>' + p + '</p>'; }).join("")
+    + '</div>'
+    + '<div class="panel">' + deep + '</div>'
+    + quizCard
+    + '<div class="btn-row"><button class="btn btn-back" onclick="go(\'earth\')">🗺️ 回地球地图</button></div>'
     + '</div>';
 }
 

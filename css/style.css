@@ -452,6 +452,11 @@ h1.screen-title {
 }
 .photo-note { font-size: 12px; color: var(--text-sub); opacity: 0.75; margin-top: 6px; text-align: center; }
 
+/* 地理奇迹发光标记 */
+.wonder-dot { cursor: pointer; }
+.wonder-dot:hover circle { fill: #ffe28a; }
+.wonder-dot text { pointer-events: none; }
+
 /* ---------- 响应式 ---------- */
 @media (max-width: 640px) {
   .aibao-row { flex-direction: column; align-items: center; text-align: center; }
